@@ -27,8 +27,6 @@ pnpm build
 
 ## 주요 문서
 
-- `docs/TODO.md`: 메인 브랜치 기준 작업 목록과 상태 관리 문서
-- `docs/development-workflow.md`: 브랜치, 커밋, PR, Slack 연동 운영 규칙
 - `docs/domain-model.md`: 스크립트 도메인 모델 기준
 - `docs/execution-architecture.md`: 실행 계층 아키텍처 기준
 
