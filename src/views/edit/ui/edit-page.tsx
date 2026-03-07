@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { startTransition, useEffect, useMemo, useReducer, useRef } from "react";
 
 import { LoadEditorDocumentUseCase } from "@/features/editor-document-load";
 import {
@@ -21,8 +21,11 @@ import {
 } from "@/features/simulation-run";
 import { MockBrowserSimulationRunner, MockScriptRepository, MockServerSimulationRunner } from "@/shared/infra";
 import type { EditorDocument } from "@/shared/model/editor-document";
+import { EditLayout } from "@/widgets/edit-layout";
 import type { FlowConnectionSnapshot } from "@/widgets/editor-canvas/model/flow-connection";
 import { EditorCanvas } from "@/widgets/editor-canvas/ui/editor-canvas";
+import { EditorControlPanel, MainContent } from "@/widgets/main-content";
+import { TransactionSnb } from "@/widgets/transaction-snb";
 import { createInitialEditorState } from "@/views/edit";
 import { editorReducer } from "@/views/edit/model/editor-store";
 
@@ -42,9 +45,9 @@ const subscribeSimulationUseCase = new SubscribeSimulationUseCase(simulationRunn
 
 export function EditPage() {
   const [editorState, dispatch] = useReducer(editorReducer, undefined, createInitialEditorState);
-  const [target, setTarget] = useState<"browser" | "server">("browser");
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const autosaveUseCaseRef = useRef<AutosaveEditorDocumentUseCase | null>(null);
+  const target = "browser" as const;
 
   const persistEditorDocument = async (document: EditorDocument) => {
     startTransition(() => {
@@ -212,126 +215,55 @@ export function EditPage() {
 
   if (!currentScript) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#fff8ef,#f7fbff)] px-6">
-        <div className="rounded-3xl border border-slate-200 bg-white px-8 py-10 text-center shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-          <p className="text-sm font-medium text-slate-500">Loading mock script...</p>
-        </div>
-      </main>
+      <EditLayout
+        sidebar={
+          <div className="flex h-full items-center justify-center px-4 py-6 text-sm text-slate-500">
+            Loading transactions...
+          </div>
+        }
+      >
+        <MainContent
+          controlPanel={
+            <EditorControlPanel isSaving={false} onSave={() => {}} onRun={() => {}} onStop={() => {}} />
+          }
+        >
+          <div className="flex h-full min-h-[720px] items-center justify-center px-8 py-10 text-center text-sm text-slate-500">
+            Node editor space is preparing the current script.
+          </div>
+        </MainContent>
+      </EditLayout>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fff3c4,transparent_32%),radial-gradient(circle_at_top_right,#dbeafe,transparent_28%),linear-gradient(180deg,#fffdf8,#f8fafc)] px-4 py-4 sm:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-[1600px] grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Transactions</p>
-          <div className="mt-5 space-y-3">
-            {transactionList.map((transaction, index) => {
-              const isSelected = selectedTransactionId === transaction.id;
-
-              return (
-                <button
-                  key={transaction.id}
-                  type="button"
-                  onClick={() => {
-                    dispatch({
-                      type: "editor/transaction-selected",
-                      payload: { transactionId: transaction.id },
-                    });
-                  }}
-                  className={[
-                    "w-full rounded-2xl border px-4 py-3 text-left transition",
-                    isSelected
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100",
-                  ].join(" ")}
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-70">
-                    Tx {index + 1}
-                  </p>
-                  <p className="mt-1 text-sm font-semibold">{transaction.name}</p>
-                  <p className="mt-2 text-xs opacity-70">{transaction.steps.length} steps</p>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
-
-        <section className="grid min-h-[calc(100vh-2rem)] grid-rows-[auto_1fr] gap-4">
-          <header className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_30px_80px_rgba(15,23,42,0.08)] backdrop-blur">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Edit Page</p>
-                <h1 className="mt-2 text-2xl font-semibold text-slate-950">{currentScript.name}</h1>
-                <p className="mt-2 max-w-2xl text-sm text-slate-600">
-                  Domain model and React Flow view model are separated. This scaffold starts with manual node placement and mock execution.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                  <span>Target</span>
-                  <select
-                    value={target}
-                    onChange={(event) => {
-                      setTarget(event.target.value as "browser" | "server");
-                    }}
-                    className="bg-transparent outline-none"
-                  >
-                    <option value="browser">browser</option>
-                    <option value="server">server</option>
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  onClick={handleManualSave}
-                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-                >
-                  {editorState.save.isSaving ? "Saving..." : "Save"}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleStartSimulation}
-                  className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
-                >
-                  Run Mock
-                </button>
-                <button
-                  type="button"
-                  onClick={handleStopSimulation}
-                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
-                >
-                  Stop
-                </button>
-              </div>
-            </div>
-            <div className="mt-5 grid gap-3 md:grid-cols-4">
-              <StatusCard label="Execution" value={editorState.execution.status} />
-              <StatusCard label="Target" value={editorState.execution.target ?? target} />
-              <StatusCard
-                label="Active Transaction"
-                value={editorState.execution.activeTransactionId ?? selectedTransactionId ?? "none"}
-              />
-              <StatusCard
-                label="Selected Node"
-                value={selectedNodeId ?? editorState.execution.activeNodeId ?? "none"}
-              />
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600">
-                Hovered: {hoveredNodeId ?? "none"}
-              </span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600">
-                Action: {activeNodeAction?.kind ?? "none"}
-              </span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600">
-                Saved: {editorState.save.lastSavedAt ?? "pending"}
-              </span>
-            </div>
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-              Hover a node to open `inspect`, `edit`, or `add-after` directly on the canvas. Edges can be created by dragging between node handles.
-            </div>
-          </header>
-
+    <EditLayout
+      sidebar={
+        <TransactionSnb
+          transactions={transactionList.map((transaction) => ({
+            id: transaction.id,
+            name: transaction.name,
+            stepCount: transaction.steps.length,
+          }))}
+          selectedTransactionId={selectedTransactionId}
+          onSelectTransaction={(transactionId) => {
+            dispatch({
+              type: "editor/transaction-selected",
+              payload: { transactionId },
+            });
+          }}
+        />
+      }
+    >
+      <MainContent
+        controlPanel={
+          <EditorControlPanel
+            isSaving={editorState.save.isSaving}
+            onSave={handleManualSave}
+            onRun={handleStartSimulation}
+            onStop={handleStopSimulation}
+          />
+        }
+      >
           <EditorCanvas
             script={currentScript}
             selectedTransactionId={selectedTransactionId}
@@ -369,8 +301,7 @@ export function EditPage() {
               });
             }}
           />
-        </section>
-      </div>
+      </MainContent>
       <NodeActionDialog
         script={currentScript}
         action={activeNodeAction}
@@ -434,16 +365,7 @@ export function EditPage() {
           dispatch({ type: "editor/node-action-cleared" });
         }}
       />
-    </main>
-  );
-}
-
-function StatusCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
-      <p className="mt-2 truncate text-sm font-semibold text-slate-900">{value}</p>
-    </div>
+    </EditLayout>
   );
 }
 

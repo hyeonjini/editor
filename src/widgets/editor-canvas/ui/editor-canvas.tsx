@@ -69,7 +69,6 @@ export function EditorCanvas({
 }: EditorCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<EditorFlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<EditorFlowEdge>([]);
-  const [hasInteracted, setHasInteracted] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -102,15 +101,7 @@ export function EditorCanvas({
   ]);
 
   return (
-    <div className="relative h-full min-h-[720px] overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(241,245,249,0.95))] shadow-[0_30px_80px_rgba(15,23,42,0.08)]">
-      <div className="absolute left-6 top-6 z-10 max-w-sm rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-          Editor Canvas
-        </p>
-        <p className="mt-1 text-sm text-slate-700">
-          React Flow is used only for canvas rendering and interactions. Domain data remains in the script model.
-        </p>
-      </div>
+    <div className="relative h-full min-h-[720px] overflow-hidden bg-white">
       <ReactFlow<EditorFlowNode, EditorFlowEdge>
         fitView
         minZoom={0.5}
@@ -176,7 +167,6 @@ export function EditorCanvas({
           onConnectionsChange(nextConnections);
         }}
         onNodeDragStop={(_, node) => {
-          setHasInteracted(true);
           onLayoutChange({
             ...layout,
             [node.id]: {
@@ -229,11 +219,6 @@ export function EditorCanvas({
       {connectionError ? (
         <div className="absolute bottom-20 right-6 rounded-2xl border border-rose-200 bg-white/95 px-4 py-3 text-xs text-rose-700 shadow-sm">
           {connectionError}
-        </div>
-      ) : null}
-      {!hasInteracted ? (
-        <div className="pointer-events-none absolute bottom-6 right-6 rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-xs text-slate-600 shadow-sm">
-          Drag nodes to set manual positions
         </div>
       ) : null}
     </div>

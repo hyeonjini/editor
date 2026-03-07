@@ -17,6 +17,7 @@
 
 | ID | Title | Status | Branch | Owner | PR | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
+| EDT-010 | Edit page shell layout and MainContent split | in-progress | task/EDT-010-shell-layout-maincontent | codex | - | layout 기준으로 상단 헤더, 좌측 SNB, 상단 제어패널, 하단 노드 편집 영역을 공백 없이 밀착 배치 |
 | EDT-001 | Edit page scaffold baseline | done | task/EDT-001-edit-scaffold | codex | - | 초기 구조, mock repository, mock runner |
 | EDT-002 | React Flow canvas scaffold | done | task/EDT-002-reactflow-canvas | codex | - | transaction 분리 캔버스, custom node, 수동 배치 |
 | EDT-003 | Node action modal and insertion flow | done | task/EDT-003-node-action-flow | codex | - | inspect, edit, add-after |
@@ -30,7 +31,7 @@
 ## 새 작업 추가 템플릿
 
 ```md
-| EDT-010 | Short task title | todo | - | - | - | Brief acceptance note |
+| EDT-011 | Short task title | todo | - | - | - | Brief acceptance note |
 ```
 
 ## 상태 업데이트 정책
