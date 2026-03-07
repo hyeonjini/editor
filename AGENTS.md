@@ -1,5 +1,15 @@
 나와 대화할 때는 항상 한글로 대화할 것.
 
+## 작업 운영 규칙
+- 작업 목록의 기준 문서는 `docs/TODO.md`다.
+- 새 작업을 시작할 때는 먼저 TODO ID를 확인하고, 해당 ID 기준 브랜치를 만든다.
+- 브랜치 이름 형식은 `task/<TODO-ID>-<short-slug>`를 사용한다.
+- 하나의 브랜치에서는 하나의 TODO만 다룬다.
+- 커밋 메시지와 PR 제목에는 TODO ID를 포함한다.
+- 구현 또는 문서 변경 후에는 가능하면 `pnpm exec tsc --noEmit`와 `pnpm build`를 기준으로 검증한다.
+- Slack으로 작업을 요청받더라도 작업 상태의 기준은 Git과 `docs/TODO.md`다.
+- `main` 브랜치는 직접 기능 개발 브랜치로 사용하지 않고, 문서 갱신이나 머지 결과 반영 중심으로만 다룬다.
+
 ## 프로젝트 성격
 - 이 프로젝트는 Next.js 기반의 프론트엔드 프로젝트다.
 - 이 작업의 범위는 edit 페이지의 MainContent 영역 구현이다.
@@ -13,6 +23,7 @@
 - `src` 디렉터리 기반으로 프로젝트를 구성할 것.
 - FSD(Feature-Sliced Design) 구조를 사용할 것.
 - 기본 레이어는 `pages`, `widgets`, `features`, `entities`, `shared`를 사용한다.
+- 단, Next.js App Router와 충돌하므로 실제 디렉터리 이름으로 `src/pages`는 사용하지 않는다. FSD의 page 성격 레이어는 별도 이름으로 관리한다.
 - 필요 시 `app` 레이어를 Next.js 엔트리 구성 용도로 사용할 수 있다.
 - 스타일링은 Tailwind CSS를 사용할 것.
 - 전역 상태는 에디터 상태, 선택 상태, 실행 상태, 저장 상태처럼 페이지 전반에서 공유되어야 하는 데이터에 한해 사용할 것.
