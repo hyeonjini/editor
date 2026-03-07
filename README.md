@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Editor Page
 
-## Getting Started
+HTTP 부하 테스트 스크립트를 시각적으로 작성, 편집, 저장, 실행하기 위한 Next.js 기반 에디터 프로젝트입니다.
 
-First, run the development server:
+## 현재 범위
+
+- `edit` 페이지 중심 구현
+- React Flow 기반 노드 캔버스
+- mock repository / mock runner 기반 저장 및 실행 흐름
+- 이후 실제 서버 API, WebSocket 실행기로 교체 가능한 구조 유지
+
+## 실행
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 `http://localhost:3000/edit`를 열면 현재 편집 화면을 확인할 수 있습니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 검증
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm exec tsc --noEmit
+pnpm build
+```
 
-## Learn More
+## 주요 문서
 
-To learn more about Next.js, take a look at the following resources:
+- `docs/TODO.md`: 메인 브랜치 기준 작업 목록과 상태 관리 문서
+- `docs/development-workflow.md`: 브랜치, 커밋, PR, Slack 연동 운영 규칙
+- `docs/domain-model.md`: 스크립트 도메인 모델 기준
+- `docs/execution-architecture.md`: 실행 계층 아키텍처 기준
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 작업 원칙
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- App Router + `src` 디렉터리 기반 구성
+- UI와 저장/실행 계층 분리
+- 도메인 모델과 React Flow view model 분리
+- mock 구현이라도 실제 서버 연동으로 쉽게 교체 가능해야 함
