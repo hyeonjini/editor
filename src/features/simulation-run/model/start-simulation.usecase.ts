@@ -1,11 +1,12 @@
 import type { ExecutionSession, ExecutionTarget } from "@/entities/execution";
 import type { Script } from "@/entities/script";
-import type { ExecutionOptions } from "@/shared/ports/simulation-runner.port";
+import type { ExecutionOptions, ExecutionScope } from "@/shared/ports/simulation-runner.port";
 import type { SimulationRunnerFactory } from "@/features/simulation-run/model/simulation-runner.factory";
 
 export interface StartSimulationInput {
   script: Script;
   target: ExecutionTarget;
+  scope?: ExecutionScope;
   options?: ExecutionOptions;
 }
 

@@ -22,8 +22,17 @@ const isDataNode = (step: TransactionStep): step is Extract<TransactionStep, { t
 const collectEvents = (
   sessionId: string,
   target: ExecutionTarget,
-  script: Script,
+  input: StartExecutionInput,
 ): Array<{ delayMs: number; event: ExecutionEvent }> => {
+  const transactionScope = input.scope?.kind === "transaction" ? input.scope : null;
+  const script = transactionScope
+    ? {
+        ...input.script,
+        transactions: input.script.transactions.filter(
+          (transaction) => transaction.id === transactionScope.transactionId,
+        ),
+      }
+    : input.script;
   const events: Array<{ delayMs: number; event: ExecutionEvent }> = [];
   let delayMs = 0;
 
@@ -220,7 +229,7 @@ export abstract class MockSimulationRunnerBase implements SimulationRunner {
       return;
     }
 
-    const events = collectEvents(sessionId, this.target, session.input.script);
+  const events = collectEvents(sessionId, this.target, session.input);
 
     session.timers = events.map(({ delayMs, event }) =>
       setTimeout(() => {

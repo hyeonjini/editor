@@ -6,9 +6,14 @@ export interface ExecutionOptions {
   durationMs?: number;
 }
 
+export type ExecutionScope =
+  | { kind: "script" }
+  | { kind: "transaction"; transactionId: string };
+
 export interface StartExecutionInput {
   script: Script;
   target: ExecutionTarget;
+  scope?: ExecutionScope;
   options?: ExecutionOptions;
 }
 

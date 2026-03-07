@@ -1,13 +1,16 @@
+import { create } from "zustand";
+
 import { applyExecutionEventToState } from "@/entities/execution";
 import type { Script } from "@/entities/script";
+import type { EditorDocument } from "@/shared/model/editor-document";
 import { normalizeConnections } from "@/widgets/editor-canvas";
 import type { EditorAction } from "@/views/edit/model/editor-actions";
 import type { EditorState } from "@/views/edit/model/editor-state";
 import { createEditorStateFromDocument, createInitialEditorState } from "@/views/edit/model/editor-state";
-
-const getDefaultTransactionId = (state: EditorState): string | null => {
-  return state.script?.transactions[0]?.id ?? null;
-};
+import type { EditorNodeActionKind } from "@/views/edit/model/editor-view-state";
+import type { ExecutionEvent } from "@/entities/execution";
+import type { FlowConnectionSnapshot } from "@/widgets/editor-canvas/model/flow-connection";
+import type { FlowLayoutSnapshot } from "@/widgets/editor-canvas/model/flow-layout";
 
 const findTransactionIdByNode = (script: Script | null, nodeId: string | null): string | null => {
   if (!script || !nodeId) {
@@ -29,7 +32,7 @@ const findTransactionIdByNode = (script: Script | null, nodeId: string | null): 
   return null;
 };
 
-export const editorReducer = (state: EditorState, action: EditorAction): EditorState => {
+export const reduceEditorState = (state: EditorState, action: EditorAction): EditorState => {
   switch (action.type) {
     case "editor/document-loaded":
       return {
@@ -190,17 +193,6 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
       return {
         ...state,
         execution: nextExecution,
-        view: {
-          ...state.view,
-          interaction: {
-            ...state.view.interaction,
-            selectedTransactionId:
-              nextExecution.activeTransactionId ??
-              state.view.interaction.selectedTransactionId ??
-              getDefaultTransactionId(state),
-            selectedNodeId: nextExecution.activeNodeId ?? state.view.interaction.selectedNodeId,
-          },
-        },
       };
     }
     default:
@@ -209,3 +201,141 @@ export const editorReducer = (state: EditorState, action: EditorAction): EditorS
 };
 
 export const createEditorStoreState = (): EditorState => createInitialEditorState();
+
+interface EditorStore {
+  editorState: EditorState;
+  resetEditorState: () => void;
+  dispatchEditorAction: (action: EditorAction) => void;
+  documentLoaded: (document: EditorDocument) => void;
+  scriptUpdated: (script: Script) => void;
+  layoutChanged: (layout: FlowLayoutSnapshot) => void;
+  transactionConnectionsChanged: (transactionId: string, connections: FlowConnectionSnapshot[]) => void;
+  transactionSelected: (transactionId: string | null) => void;
+  nodeSelected: (nodeId: string | null) => void;
+  nodeHovered: (nodeId: string | null) => void;
+  nodeActionOpened: (nodeId: string, kind: EditorNodeActionKind) => void;
+  nodeActionCleared: () => void;
+  saveStarted: () => void;
+  saveSucceeded: (savedAt: string) => void;
+  saveFailed: (message: string) => void;
+  executionEventReceived: (event: ExecutionEvent) => void;
+}
+
+const applyActionToStoreState = (state: EditorState, action: EditorAction) => reduceEditorState(state, action);
+
+export const useEditorStore = create<EditorStore>()((set) => ({
+  editorState: createEditorStoreState(),
+  resetEditorState: () => {
+    set({ editorState: createEditorStoreState() });
+  },
+  dispatchEditorAction: (action) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, action),
+    }));
+  },
+  documentLoaded: (document) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/document-loaded",
+        payload: document,
+      }),
+    }));
+  },
+  scriptUpdated: (script) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/script-updated",
+        payload: script,
+      }),
+    }));
+  },
+  layoutChanged: (layout) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/layout-changed",
+        payload: layout,
+      }),
+    }));
+  },
+  transactionConnectionsChanged: (transactionId, connections) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/transaction-connections-changed",
+        payload: {
+          transactionId,
+          connections,
+        },
+      }),
+    }));
+  },
+  transactionSelected: (transactionId) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/transaction-selected",
+        payload: { transactionId },
+      }),
+    }));
+  },
+  nodeSelected: (nodeId) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/node-selected",
+        payload: { nodeId },
+      }),
+    }));
+  },
+  nodeHovered: (nodeId) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/node-hovered",
+        payload: { nodeId },
+      }),
+    }));
+  },
+  nodeActionOpened: (nodeId, kind) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/node-action-opened",
+        payload: { nodeId, kind },
+      }),
+    }));
+  },
+  nodeActionCleared: () => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/node-action-cleared",
+      }),
+    }));
+  },
+  saveStarted: () => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/save-started",
+      }),
+    }));
+  },
+  saveSucceeded: (savedAt) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/save-succeeded",
+        payload: { savedAt },
+      }),
+    }));
+  },
+  saveFailed: (message) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/save-failed",
+        payload: { message },
+      }),
+    }));
+  },
+  executionEventReceived: (event) => {
+    set((state) => ({
+      editorState: applyActionToStoreState(state.editorState, {
+        type: "editor/execution-event-received",
+        payload: event,
+      }),
+    }));
+  },
+}));

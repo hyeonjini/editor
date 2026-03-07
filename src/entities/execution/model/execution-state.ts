@@ -3,6 +3,7 @@ import type { ExecutionTarget } from "@/entities/execution/model/execution-targe
 
 export type ExecutionStatus = "idle" | "starting" | "running" | "stopping" | "completed" | "failed";
 export type NodeExecutionStatus = "idle" | "running" | "passed" | "failed";
+export type TransactionExecutionStatus = "idle" | "running" | "completed" | "failed";
 
 export interface ExecutionLogItem {
   level: "info" | "warn" | "error";
@@ -18,6 +19,7 @@ export interface ExecutionState {
   activeNodeId: string | null;
   logs: ExecutionLogItem[];
   nodeStatuses: Record<string, NodeExecutionStatus>;
+  transactionStatuses: Record<string, TransactionExecutionStatus>;
   startedAt: string | null;
   endedAt: string | null;
   errorMessage: string | null;
@@ -31,6 +33,7 @@ export const createInitialExecutionState = (): ExecutionState => ({
   activeNodeId: null,
   logs: [],
   nodeStatuses: {},
+  transactionStatuses: {},
   startedAt: null,
   endedAt: null,
   errorMessage: null,
@@ -50,6 +53,7 @@ export const applyExecutionEventToState = (
         activeNodeId: null,
         logs: [],
         nodeStatuses: {},
+        transactionStatuses: {},
         startedAt: event.timestamp,
         endedAt: null,
         errorMessage: null,
@@ -58,6 +62,13 @@ export const applyExecutionEventToState = (
       return {
         ...state,
         activeTransactionId: event.transactionId,
+        transactionStatuses: {
+          ...state.transactionStatuses,
+          ...(state.activeTransactionId && state.activeTransactionId !== event.transactionId
+            ? { [state.activeTransactionId]: "completed" as const }
+            : {}),
+          [event.transactionId]: "running",
+        },
       };
     case "request.started":
       return {
@@ -95,6 +106,12 @@ export const applyExecutionEventToState = (
         ...state,
         status: "failed",
         activeNodeId: null,
+        transactionStatuses: state.activeTransactionId
+          ? {
+              ...state.transactionStatuses,
+              [state.activeTransactionId]: "failed",
+            }
+          : state.transactionStatuses,
         endedAt: event.timestamp,
         errorMessage: event.reason,
       };
@@ -104,6 +121,12 @@ export const applyExecutionEventToState = (
         status: "completed",
         activeTransactionId: null,
         activeNodeId: null,
+        transactionStatuses: state.activeTransactionId
+          ? {
+              ...state.transactionStatuses,
+              [state.activeTransactionId]: "completed",
+            }
+          : state.transactionStatuses,
         endedAt: event.timestamp,
       };
     default:

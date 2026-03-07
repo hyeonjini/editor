@@ -17,6 +17,8 @@
 
 | ID | Title | Status | Branch | Owner | PR | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
+| EDT-013 | Migrate edit state architecture to Zustand store | done | task/EDT-013-zustand-editor-store | codex | - | edit 페이지 상태를 zustand store로 전환하고 controller는 orchestration 중심으로 정리 |
+| EDT-012 | Transaction run split and typed edit dialogs | done | main | codex | - | transaction별 Run, 현재 편집 transaction Run, 제어 패널 요소 추가, request/request-group/data 전용 모달 분리 |
 | EDT-011 | Edit canvas polish and node interaction refinement | in-progress | task/EDT-011-editor-polish | codex | - | 해상도 대응 레이아웃, 캔버스 대비 개선, hover 액션 UI, 노드 설정 패널, hover 깜빡임 수정, React Flow attribution 검토 |
 | EDT-010 | Edit page shell layout and MainContent split | in-progress | task/EDT-010-shell-layout-maincontent | codex | - | layout 기준으로 상단 헤더, 좌측 SNB, 상단 제어패널, 하단 노드 편집 영역을 공백 없이 밀착 배치 |
 | EDT-001 | Edit page scaffold baseline | done | task/EDT-001-edit-scaffold | codex | - | 초기 구조, mock repository, mock runner |
@@ -32,7 +34,7 @@
 ## 새 작업 추가 템플릿
 
 ```md
-| EDT-012 | Short task title | todo | - | - | - | Brief acceptance note |
+| EDT-014 | Short task title | todo | - | - | - | Brief acceptance note |
 ```
 
 ## 상태 업데이트 정책

@@ -188,6 +188,24 @@ export const removeNodeById = (script: Script, nodeId: string): Script => {
   };
 };
 
+export const appendNodeToTransaction = (
+  script: Script,
+  transactionId: string,
+  newNode: TransactionStep,
+): Script => {
+  return {
+    ...script,
+    transactions: script.transactions.map((transaction) =>
+      transaction.id === transactionId
+        ? {
+            ...transaction,
+            steps: [...transaction.steps, newNode],
+          }
+        : transaction,
+    ),
+  };
+};
+
 export const createDefaultDataNode = () => ({
   id: createScopedId("data", String(Date.now())),
   type: "data" as const,
