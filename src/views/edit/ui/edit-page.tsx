@@ -11,6 +11,7 @@ import {
   GetScriptNodeUseCase,
   InsertNodeAfterUseCase,
   NodeActionDialog,
+  RemoveScriptNodeUseCase,
   ReplaceScriptNodeUseCase,
 } from "@/features/edit-node";
 import {
@@ -39,6 +40,7 @@ const saveEditorDocumentUseCase = new SaveEditorDocumentUseCase(scriptRepository
 const getScriptNodeUseCase = new GetScriptNodeUseCase();
 const replaceScriptNodeUseCase = new ReplaceScriptNodeUseCase();
 const insertNodeAfterUseCase = new InsertNodeAfterUseCase();
+const removeScriptNodeUseCase = new RemoveScriptNodeUseCase();
 const startSimulationUseCase = new StartSimulationUseCase(simulationRunnerFactory);
 const stopSimulationUseCase = new StopSimulationUseCase(simulationRunnerFactory);
 const subscribeSimulationUseCase = new SubscribeSimulationUseCase(simulationRunnerFactory);
@@ -105,7 +107,6 @@ export function EditPage() {
   const currentScript = editorState.script;
   const selectedTransactionId = editorState.view.interaction.selectedTransactionId;
   const selectedNodeId = editorState.view.interaction.selectedNodeId;
-  const hoveredNodeId = editorState.view.interaction.hoveredNodeId;
   const activeNodeAction = editorState.view.interaction.activeNodeAction;
   const activeLocatedNode = useMemo(() => {
     if (!currentScript || !activeNodeAction?.nodeId) {
@@ -196,6 +197,27 @@ export function EditPage() {
     });
   };
 
+  const handleDeleteNode = (nodeId: string) => {
+    if (!currentScript) {
+      return;
+    }
+
+    const nextScript = removeScriptNodeUseCase.execute(currentScript, nodeId);
+    handleReplaceNode(nextScript);
+
+    if (selectedTransactionId) {
+      const existingConnections = editorState.view.connections[selectedTransactionId] ?? [];
+      const nextConnections = removeConnectionsForNode(existingConnections, nodeId);
+      updateTransactionConnections(selectedTransactionId, nextConnections);
+    }
+
+    dispatch({
+      type: "editor/node-selected",
+      payload: { nodeId: null },
+    });
+    dispatch({ type: "editor/node-action-cleared" });
+  };
+
   const updateTransactionConnections = (
     transactionId: string | null,
     connections: FlowConnectionSnapshot[],
@@ -227,7 +249,7 @@ export function EditPage() {
             <EditorControlPanel isSaving={false} onSave={() => {}} onRun={() => {}} onStop={() => {}} />
           }
         >
-          <div className="flex h-full min-h-[720px] items-center justify-center px-8 py-10 text-center text-sm text-slate-500">
+          <div className="flex h-full min-h-0 items-center justify-center px-8 py-10 text-center text-sm text-slate-500">
             Node editor space is preparing the current script.
           </div>
         </MainContent>
@@ -271,7 +293,6 @@ export function EditPage() {
             layout={editorState.view.layout}
             connections={selectedTransactionConnections}
             selectedNodeId={selectedNodeId}
-            hoveredNodeId={hoveredNodeId}
             activeNodeAction={activeNodeAction}
             onLayoutChange={(layout) => {
               dispatch({
@@ -288,13 +309,12 @@ export function EditPage() {
                 payload: { nodeId },
               });
             }}
-            onNodeHoverChange={(nodeId) => {
-              dispatch({
-                type: "editor/node-hovered",
-                payload: { nodeId },
-              });
-            }}
             onNodeAction={(nodeId, kind) => {
+              if (kind === "delete") {
+                handleDeleteNode(nodeId);
+                return;
+              }
+
               dispatch({
                 type: "editor/node-action-opened",
                 payload: { nodeId, kind },
@@ -402,4 +422,33 @@ function insertConnectionAfterNode(
   }
 
   return [...unaffectedConnections, ...replacementConnections];
+}
+
+function removeConnectionsForNode(
+  connections: FlowConnectionSnapshot[],
+  nodeId: string,
+): FlowConnectionSnapshot[] {
+  const incoming = connections.filter((connection) => connection.target === nodeId);
+  const outgoing = connections.filter((connection) => connection.source === nodeId);
+  const unaffected = connections.filter(
+    (connection) => connection.source !== nodeId && connection.target !== nodeId,
+  );
+
+  const bridgedConnections = incoming.flatMap((sourceConnection) =>
+    outgoing
+      .filter((targetConnection) => targetConnection.target !== sourceConnection.source)
+      .map((targetConnection) => ({
+        id: `manual:${sourceConnection.source}->${targetConnection.target}`,
+        source: sourceConnection.source,
+        target: targetConnection.target,
+      })),
+  );
+
+  const dedupedConnections = new Map<string, FlowConnectionSnapshot>();
+
+  [...unaffected, ...bridgedConnections].forEach((connection) => {
+    dedupedConnections.set(`${connection.source}:${connection.target}`, connection);
+  });
+
+  return Array.from(dedupedConnections.values());
 }

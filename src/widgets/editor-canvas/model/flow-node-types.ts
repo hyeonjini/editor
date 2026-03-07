@@ -9,7 +9,7 @@ export const editorFlowNodeTypes = {
 } as const;
 
 export type EditorFlowNodeType = (typeof editorFlowNodeTypes)[keyof typeof editorFlowNodeTypes];
-export type EditorCanvasActionKind = "inspect" | "edit" | "add-after";
+export type EditorCanvasActionKind = "inspect" | "edit" | "add-after" | "delete";
 
 interface EditorFlowNodeDataBase {
   [key: string]: unknown;

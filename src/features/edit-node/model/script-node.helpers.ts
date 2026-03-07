@@ -146,6 +146,48 @@ export const insertNodeAfterTarget = (
   };
 };
 
+export const removeNodeById = (script: Script, nodeId: string): Script => {
+  const location = findLocatedScriptNode(script, nodeId);
+
+  if (!location) {
+    return script;
+  }
+
+  const transactions = script.transactions.map((transaction, transactionIndex) => {
+    if (transactionIndex !== location.transactionIndex) {
+      return transaction;
+    }
+
+    if (location.container === "transaction-step") {
+      return {
+        ...transaction,
+        steps: transaction.steps.filter((step, stepIndex) => stepIndex !== location.stepIndex),
+      };
+    }
+
+    const steps = transaction.steps.map((step, stepIndex) => {
+      if (stepIndex !== location.stepIndex || step.type !== "request-group" || location.requestIndex === null) {
+        return step;
+      }
+
+      return {
+        ...step,
+        requests: step.requests.filter((_, requestIndex) => requestIndex !== location.requestIndex),
+      };
+    });
+
+    return {
+      ...transaction,
+      steps,
+    };
+  });
+
+  return {
+    ...script,
+    transactions,
+  };
+};
+
 export const createDefaultDataNode = () => ({
   id: createScopedId("data", String(Date.now())),
   type: "data" as const,
