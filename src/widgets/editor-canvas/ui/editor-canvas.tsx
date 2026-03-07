@@ -43,12 +43,10 @@ interface EditorCanvasProps {
   layout: FlowLayoutSnapshot;
   connections: FlowConnectionSnapshot[];
   selectedNodeId: string | null;
-  hoveredNodeId: string | null;
   activeNodeAction: { nodeId: string; kind: string } | null;
   onLayoutChange: (layout: FlowLayoutSnapshot) => void;
   onConnectionsChange: (connections: FlowConnectionSnapshot[]) => void;
   onNodeSelect?: (nodeId: string | null) => void;
-  onNodeHoverChange?: (nodeId: string | null) => void;
   onNodeAction?: (nodeId: string, kind: EditorCanvasActionKind) => void;
 }
 
@@ -59,12 +57,10 @@ export function EditorCanvas({
   layout,
   connections,
   selectedNodeId,
-  hoveredNodeId,
   activeNodeAction,
   onLayoutChange,
   onConnectionsChange,
   onNodeSelect,
-  onNodeHoverChange,
   onNodeAction,
 }: EditorCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<EditorFlowNode>([]);
@@ -79,7 +75,6 @@ export function EditorCanvas({
       layout,
       connections,
       selectedNodeId,
-      hoveredNodeId,
       activeNodeAction,
       onNodeAction,
     });
@@ -89,7 +84,6 @@ export function EditorCanvas({
   }, [
     activeNodeAction,
     executionState,
-    hoveredNodeId,
     layout,
     connections,
     script,
@@ -101,14 +95,16 @@ export function EditorCanvas({
   ]);
 
   return (
-    <div className="relative h-full min-h-[720px] overflow-hidden bg-white">
+    <div className="relative h-full min-h-0 overflow-hidden bg-[radial-gradient(circle_at_top,#f9fafb,#edf2f7)]">
       <ReactFlow<EditorFlowNode, EditorFlowEdge>
         fitView
+        fitViewOptions={{ padding: 0.18 }}
         minZoom={0.5}
         maxZoom={1.4}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        proOptions={{ hideAttribution: true }}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={(connection: Connection) => {
@@ -179,16 +175,9 @@ export function EditorCanvas({
           setConnectionError(null);
           onNodeSelect?.(node.id);
         }}
-        onNodeMouseEnter={(_, node) => {
-          onNodeHoverChange?.(node.id);
-        }}
-        onNodeMouseLeave={() => {
-          onNodeHoverChange?.(null);
-        }}
         onPaneClick={() => {
           setConnectionError(null);
           onNodeSelect?.(null);
-          onNodeHoverChange?.(null);
         }}
         defaultEdgeOptions={{
           type: "smoothstep",
@@ -198,8 +187,11 @@ export function EditorCanvas({
         connectionMode={ConnectionMode.Loose}
         deleteKeyCode={["Backspace", "Delete"]}
       >
-        <Background color="#cbd5e1" gap={20} variant={BackgroundVariant.Dots} />
-        <Controls position="bottom-right" />
+        <Background color="#d1d5db" gap={18} variant={BackgroundVariant.Dots} />
+        <Controls
+          position="bottom-right"
+          className="!overflow-hidden !rounded-xl !border !border-slate-300 !bg-white !shadow-sm"
+        />
         <MiniMap
           pannable
           zoomable
@@ -213,7 +205,7 @@ export function EditorCanvas({
             }
             return "#334155";
           }}
-          className="!rounded-2xl !border !border-slate-200 !bg-white/85"
+          className="!rounded-xl !border !border-slate-300 !bg-white/95 !shadow-sm"
         />
       </ReactFlow>
       {connectionError ? (

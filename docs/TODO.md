@@ -17,6 +17,7 @@
 
 | ID | Title | Status | Branch | Owner | PR | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
+| EDT-011 | Edit canvas polish and node interaction refinement | in-progress | task/EDT-011-editor-polish | codex | - | 해상도 대응 레이아웃, 캔버스 대비 개선, hover 액션 UI, 노드 설정 패널, hover 깜빡임 수정, React Flow attribution 검토 |
 | EDT-010 | Edit page shell layout and MainContent split | in-progress | task/EDT-010-shell-layout-maincontent | codex | - | layout 기준으로 상단 헤더, 좌측 SNB, 상단 제어패널, 하단 노드 편집 영역을 공백 없이 밀착 배치 |
 | EDT-001 | Edit page scaffold baseline | done | task/EDT-001-edit-scaffold | codex | - | 초기 구조, mock repository, mock runner |
 | EDT-002 | React Flow canvas scaffold | done | task/EDT-002-reactflow-canvas | codex | - | transaction 분리 캔버스, custom node, 수동 배치 |
@@ -31,7 +32,7 @@
 ## 새 작업 추가 템플릿
 
 ```md
-| EDT-011 | Short task title | todo | - | - | - | Brief acceptance note |
+| EDT-012 | Short task title | todo | - | - | - | Brief acceptance note |
 ```
 
 ## 상태 업데이트 정책

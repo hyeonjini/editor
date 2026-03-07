@@ -46,7 +46,6 @@ interface MapScriptToFlowInput {
   connections: FlowConnectionSnapshot[];
   executionState: ExecutionState;
   selectedNodeId: string | null;
-  hoveredNodeId: string | null;
   activeNodeAction: { nodeId: string; kind: string } | null;
   onNodeAction?: (nodeId: string, kind: EditorCanvasActionKind) => void;
 }
@@ -58,7 +57,6 @@ export const mapScriptToFlow = ({
   connections,
   executionState,
   selectedNodeId,
-  hoveredNodeId,
   activeNodeAction,
   onNodeAction,
 }: MapScriptToFlowInput): EditorFlowGraph => {
@@ -80,7 +78,6 @@ export const mapScriptToFlow = ({
         position.y,
         executionState,
         selectedNodeId,
-        hoveredNodeId,
         activeNodeAction,
         onNodeAction,
       );
@@ -94,7 +91,6 @@ export const mapScriptToFlow = ({
         position.y,
         executionState,
         selectedNodeId,
-        hoveredNodeId,
         activeNodeAction,
         onNodeAction,
       );
@@ -107,7 +103,6 @@ export const mapScriptToFlow = ({
       position.y,
       executionState,
       selectedNodeId,
-      hoveredNodeId,
       activeNodeAction,
       onNodeAction,
     );
@@ -140,7 +135,6 @@ const createDataFlowNode = (
   y: number,
   executionState: ExecutionState,
   selectedNodeId: string | null,
-  hoveredNodeId: string | null,
   activeNodeAction: { nodeId: string; kind: string } | null,
   onNodeAction?: (nodeId: string, kind: EditorCanvasActionKind) => void,
 ) => ({
@@ -157,7 +151,7 @@ const createDataFlowNode = (
     executionStatus: getExecutionStatus(executionState, node.id),
     isActive: executionState.activeNodeId === node.id,
     isSelected: selectedNodeId === node.id,
-    isHovered: hoveredNodeId === node.id,
+    isHovered: false,
     activeActionKind: activeNodeAction?.nodeId === node.id ? activeNodeAction.kind : null,
     onAction: onNodeAction,
   },
@@ -170,7 +164,6 @@ const createRequestFlowNode = (
   y: number,
   executionState: ExecutionState,
   selectedNodeId: string | null,
-  hoveredNodeId: string | null,
   activeNodeAction: { nodeId: string; kind: string } | null,
   onNodeAction?: (nodeId: string, kind: EditorCanvasActionKind) => void,
 ) => ({
@@ -189,7 +182,7 @@ const createRequestFlowNode = (
     executionStatus: getExecutionStatus(executionState, node.id),
     isActive: executionState.activeNodeId === node.id,
     isSelected: selectedNodeId === node.id,
-    isHovered: hoveredNodeId === node.id,
+    isHovered: false,
     activeActionKind: activeNodeAction?.nodeId === node.id ? activeNodeAction.kind : null,
     onAction: onNodeAction,
   },
@@ -202,7 +195,6 @@ const createRequestGroupFlowNode = (
   y: number,
   executionState: ExecutionState,
   selectedNodeId: string | null,
-  hoveredNodeId: string | null,
   activeNodeAction: { nodeId: string; kind: string } | null,
   onNodeAction?: (nodeId: string, kind: EditorCanvasActionKind) => void,
 ) => ({
@@ -220,7 +212,7 @@ const createRequestGroupFlowNode = (
     executionStatus: getExecutionStatus(executionState, node.id),
     isActive: executionState.activeNodeId === node.id,
     isSelected: selectedNodeId === node.id,
-    isHovered: hoveredNodeId === node.id,
+    isHovered: false,
     activeActionKind: activeNodeAction?.nodeId === node.id ? activeNodeAction.kind : null,
     onAction: onNodeAction,
   },
