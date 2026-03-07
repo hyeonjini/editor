@@ -22,7 +22,7 @@
 | EDT-003 | Node action modal and insertion flow | done | task/EDT-003-node-action-flow | codex | - | inspect, edit, add-after |
 | EDT-004 | Transaction isolated canvas and edge control | done | task/EDT-004-transaction-canvas | codex | - | request-group summary node, 사용자 연결 제어 |
 | EDT-005 | Canvas hover action buttons and edge validation | done | task/EDT-005-canvas-actions | codex | - | 캔버스 직접 액션, cycle 방지 |
-| EDT-006 | Request form validation and error UX | todo | - | - | - | request 편집 모달 validation 추가 |
+| EDT-006 | Request form validation and error UX | in-review | task/EDT-006-request-validation | codex | - | request 편집 모달 validation 추가 |
 | EDT-007 | Save on page leave | todo | - | - | - | beforeunload 저장과 복원 정책 정리 |
 | EDT-008 | Request-group detail editor | todo | - | - | - | group 내부 request 일괄 편집 모달 |
 | EDT-009 | DTO policy for persisted editor view state | todo | - | - | - | 서버 저장 DTO 경계 정의 |

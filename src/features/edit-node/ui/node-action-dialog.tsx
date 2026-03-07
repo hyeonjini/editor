@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import type { DataNode, HttpMethod, RequestGroupNode, RequestNode, Script } from "@/entities/script";
@@ -9,6 +9,7 @@ import {
   createDefaultRequestGroupNode,
   createDefaultRequestNode,
   type LocatedScriptNode,
+  validateRequestNodeEditDraft,
 } from "@/features/edit-node";
 import { AppDialog } from "@/shared/ui";
 import type { EditorNodeActionState } from "@/views/edit/model/editor-view-state";
@@ -25,6 +26,7 @@ interface NodeActionDialogProps {
 }
 
 type InsertableNodeType = "data" | "request" | "request-group";
+type RequestFieldName = "name" | "url" | "description";
 
 export function NodeActionDialog({
   script,
@@ -43,11 +45,27 @@ export function NodeActionDialog({
   const [dataType, setDataType] = useState("string");
   const [dataValue, setDataValue] = useState("");
   const [insertType, setInsertType] = useState<InsertableNodeType>("request");
+  const [touchedRequestFields, setTouchedRequestFields] = useState<Record<RequestFieldName, boolean>>({
+    name: false,
+    url: false,
+    description: false,
+  });
+  const [didAttemptSubmit, setDidAttemptSubmit] = useState(false);
 
   const isOpen = Boolean(action && node);
   const actionKind = action?.kind ?? null;
   const currentNode = node?.node ?? null;
   const currentLocation = node;
+  const requestValidation = useMemo(
+    () =>
+      validateRequestNodeEditDraft({
+        name,
+        method,
+        url,
+        description,
+      }),
+    [description, method, name, url],
+  );
 
   useEffect(() => {
     if (!currentNode) {
@@ -82,11 +100,39 @@ export function NodeActionDialog({
     } else {
       setInsertType("request");
     }
+
+    setDidAttemptSubmit(false);
+    setTouchedRequestFields({
+      name: false,
+      url: false,
+      description: false,
+    });
   }, [currentNode, node?.container]);
 
   const insertableTypes = useMemo<InsertableNodeType[]>(
     () => (node?.container === "group-request" ? ["request"] : ["data", "request", "request-group"]),
     [node?.container],
+  );
+  const requestVisibleErrors = useMemo(
+    () => ({
+      name:
+        (didAttemptSubmit || touchedRequestFields.name) && currentNode?.type === "request"
+          ? requestValidation.errors.name
+          : undefined,
+      url:
+        (didAttemptSubmit || touchedRequestFields.url) && currentNode?.type === "request"
+          ? requestValidation.errors.url
+          : undefined,
+      description:
+        (didAttemptSubmit || touchedRequestFields.description) && currentNode?.type === "request"
+          ? requestValidation.errors.description
+          : undefined,
+    }),
+    [currentNode?.type, didAttemptSubmit, requestValidation.errors.description, requestValidation.errors.name, requestValidation.errors.url, touchedRequestFields.description, touchedRequestFields.name, touchedRequestFields.url],
+  );
+  const requestErrorMessages = useMemo(
+    () => Object.values(requestVisibleErrors).filter((value): value is string => Boolean(value)),
+    [requestVisibleErrors],
   );
 
   const handleEditSubmit = () => {
@@ -95,14 +141,19 @@ export function NodeActionDialog({
     }
 
     if (currentNode.type === "request") {
+      setDidAttemptSubmit(true);
+      if (!requestValidation.isValid) {
+        return;
+      }
+
       onApplyEdit({
         ...currentNode,
-        name,
-        description: description || undefined,
+        name: name.trim(),
+        description: description.trim() || undefined,
         method,
         url: {
           kind: "static",
-          value: url,
+          value: url.trim(),
         },
       });
       return;
@@ -166,7 +217,7 @@ export function NodeActionDialog({
             <button
               type="button"
               onClick={actionKind === "edit" ? handleEditSubmit : handleAddAfter}
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition"
             >
               {actionKind === "edit" ? "Apply Changes" : "Insert Node"}
             </button>
@@ -182,19 +233,35 @@ export function NodeActionDialog({
 
       {actionKind === "edit" ? (
         <div className="grid gap-4 md:grid-cols-2">
+          {currentNode.type === "request" && requestErrorMessages.length > 0 ? (
+            <div className="md:col-span-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              <p className="font-semibold">Request form has validation errors.</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">
+                {requestErrorMessages.map((message) => (
+                  <li key={message}>{message}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <Field label="Node Name">
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
+              onBlur={() => markRequestFieldTouched(currentNode.type, "name", setTouchedRequestFields)}
+              aria-invalid={Boolean(requestVisibleErrors.name)}
+              className={getInputClassName(Boolean(requestVisibleErrors.name))}
             />
+            <FieldError message={requestVisibleErrors.name} />
           </Field>
           <Field label="Description">
             <input
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
+              onBlur={() => markRequestFieldTouched(currentNode.type, "description", setTouchedRequestFields)}
+              aria-invalid={Boolean(requestVisibleErrors.description)}
+              className={getInputClassName(Boolean(requestVisibleErrors.description))}
             />
+            <FieldError message={requestVisibleErrors.description} />
           </Field>
           {currentNode.type === "request" ? (
             <>
@@ -215,8 +282,12 @@ export function NodeActionDialog({
                 <input
                   value={url}
                   onChange={(event) => setUrl(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
+                  onBlur={() => markRequestFieldTouched(currentNode.type, "url", setTouchedRequestFields)}
+                  aria-invalid={Boolean(requestVisibleErrors.url)}
+                  className={getInputClassName(Boolean(requestVisibleErrors.url))}
                 />
+                <FieldHint>Use a path or absolute URL. Spaces are not allowed.</FieldHint>
+                <FieldError message={requestVisibleErrors.url} />
               </Field>
             </>
           ) : null}
@@ -319,4 +390,37 @@ function Field({
       {children}
     </label>
   );
+}
+
+function FieldHint({ children }: { children: ReactNode }) {
+  return <p className="mt-2 text-xs text-slate-500">{children}</p>;
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) {
+    return null;
+  }
+
+  return <p className="mt-2 text-xs font-medium text-rose-600">{message}</p>;
+}
+
+function getInputClassName(hasError: boolean) {
+  return [
+    "w-full rounded-2xl border px-4 py-3 outline-none transition",
+    hasError
+      ? "border-rose-300 bg-rose-50 text-rose-950 focus:border-rose-500"
+      : "border-slate-200 bg-white text-slate-950 focus:border-slate-400",
+  ].join(" ");
+}
+
+function markRequestFieldTouched(
+  nodeType: DataNode["type"] | RequestNode["type"] | RequestGroupNode["type"],
+  fieldName: RequestFieldName,
+  setTouchedRequestFields: Dispatch<SetStateAction<Record<RequestFieldName, boolean>>>,
+) {
+  if (nodeType !== "request") {
+    return;
+  }
+
+  setTouchedRequestFields((current) => (current[fieldName] ? current : { ...current, [fieldName]: true }));
 }
