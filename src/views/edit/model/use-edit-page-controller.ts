@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useMemo, useRef } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 
 import type { DataNode, RequestGroupNode, RequestNode } from "@/entities/script";
 import { LoadEditorDocumentUseCase } from "@/features/editor-document-load";
@@ -18,33 +18,46 @@ import {
   RemoveScriptNodeUseCase,
   ReplaceScriptNodeUseCase,
 } from "@/features/edit-node";
+import { ImportHarIntoTransactionUseCase } from "@/features/har-import";
 import {
   SimulationRunnerFactory,
   StartSimulationUseCase,
   StopSimulationUseCase,
   SubscribeSimulationUseCase,
 } from "@/features/simulation-run";
-import { MockBrowserSimulationRunner, MockScriptRepository, MockServerSimulationRunner } from "@/shared/infra";
+import {
+  createEditorDocumentRepository,
+  HarJsonImporter,
+  MockBrowserSimulationRunner,
+  MockServerSimulationRunner,
+} from "@/shared/infra";
 import type { EditorDocument } from "@/shared/model/editor-document";
 import type { FlowConnectionSnapshot } from "@/widgets/editor-canvas/model/flow-connection";
 import { buildTransactionSnbItems } from "@/widgets/transaction-snb/model/build-transaction-snb-items";
 import { useEditorStore } from "@/views/edit/model/editor-store";
 
-const scriptRepository = new MockScriptRepository();
+const editorDocumentRepository = createEditorDocumentRepository();
 const simulationRunnerFactory = new SimulationRunnerFactory([
   new MockBrowserSimulationRunner(),
   new MockServerSimulationRunner(),
 ]);
-const loadEditorDocumentUseCase = new LoadEditorDocumentUseCase(scriptRepository);
-const saveEditorDocumentUseCase = new SaveEditorDocumentUseCase(scriptRepository);
+const loadEditorDocumentUseCase = new LoadEditorDocumentUseCase(editorDocumentRepository);
+const saveEditorDocumentUseCase = new SaveEditorDocumentUseCase(editorDocumentRepository);
 const getScriptNodeUseCase = new GetScriptNodeUseCase();
 const replaceScriptNodeUseCase = new ReplaceScriptNodeUseCase();
 const insertNodeAfterUseCase = new InsertNodeAfterUseCase();
 const removeScriptNodeUseCase = new RemoveScriptNodeUseCase();
 const addNodeToTransactionUseCase = new AddNodeToTransactionUseCase();
+const importHarIntoTransactionUseCase = new ImportHarIntoTransactionUseCase(new HarJsonImporter());
 const startSimulationUseCase = new StartSimulationUseCase(simulationRunnerFactory);
 const stopSimulationUseCase = new StopSimulationUseCase(simulationRunnerFactory);
 const subscribeSimulationUseCase = new SubscribeSimulationUseCase(simulationRunnerFactory);
+
+type HarImportFeedback = {
+  tone: "success" | "warning" | "error";
+  message: string;
+  warnings: string[];
+};
 
 export function useEditPageController() {
   const editorState = useEditorStore((state) => state.editorState);
@@ -63,6 +76,7 @@ export function useEditPageController() {
   const executionEventReceived = useEditorStore((state) => state.executionEventReceived);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const autosaveUseCaseRef = useRef<AutosaveEditorDocumentUseCase | null>(null);
+  const [harImportFeedback, setHarImportFeedback] = useState<HarImportFeedback | null>(null);
   const target = "browser" as const;
 
   const persistEditorDocument = async (document: EditorDocument) => {
@@ -298,6 +312,7 @@ export function useEditPageController() {
     activeLocatedNode,
     selectedTransactionConnections,
     transactionItems,
+    harImportFeedback,
     canRunCurrentTransaction: Boolean(selectedTransactionId),
     canAddElement: Boolean(selectedTransactionId),
     handleTransactionSelect: (transactionId: string) => {
@@ -349,6 +364,55 @@ export function useEditPageController() {
     },
     handleAddData: () => {
       handleAddNodeToCurrentTransaction("data");
+    },
+    handleImportHar: (file: File) => {
+      if (!currentScript || !selectedTransactionId) {
+        setHarImportFeedback({
+          tone: "error",
+          message: "Select a transaction before importing a HAR file.",
+          warnings: [],
+        });
+        return;
+      }
+
+      void (async () => {
+        try {
+          const harJson = await file.text();
+          const selectedTransaction =
+            currentScript.transactions.find((transaction) => transaction.id === selectedTransactionId) ?? null;
+          const result = await importHarIntoTransactionUseCase.execute(
+            currentScript,
+            selectedTransactionId,
+            harJson,
+          );
+
+          handleScriptReplace(result.nextScript);
+
+          if (selectedTransaction) {
+            const existingConnections = editorState.view.connections[selectedTransactionId] ?? [];
+            const lastStep = selectedTransaction.steps[selectedTransaction.steps.length - 1] ?? null;
+            const nextConnections = appendConnectionToTransactionEnd(
+              existingConnections,
+              lastStep?.id ?? null,
+              result.requestGroupId,
+            );
+            updateTransactionConnections(selectedTransactionId, nextConnections);
+          }
+
+          nodeSelected(result.requestGroupId);
+          setHarImportFeedback({
+            tone: result.warnings.length > 0 ? "warning" : "success",
+            message: `Imported ${result.importedRequestCount} request${result.importedRequestCount === 1 ? "" : "s"} from ${file.name}.`,
+            warnings: result.warnings,
+          });
+        } catch (error) {
+          setHarImportFeedback({
+            tone: "error",
+            message: error instanceof Error ? error.message : "HAR import failed.",
+            warnings: [],
+          });
+        }
+      })();
     },
     handleApplyEdit,
     handleApplyDataEdit,

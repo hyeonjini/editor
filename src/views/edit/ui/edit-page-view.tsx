@@ -21,6 +21,7 @@ export type EditPageViewProps = Pick<
   | "transactionItems"
   | "canRunCurrentTransaction"
   | "canAddElement"
+  | "harImportFeedback"
   | "handleTransactionSelect"
   | "handleTransactionRun"
   | "handleCurrentTransactionRun"
@@ -34,6 +35,7 @@ export type EditPageViewProps = Pick<
   | "handleAddRequest"
   | "handleAddRequestGroup"
   | "handleAddData"
+  | "handleImportHar"
   | "handleApplyEdit"
   | "handleApplyDataEdit"
   | "handleApplyGroupEdit"
@@ -51,6 +53,7 @@ export function EditPageView({
   transactionItems,
   canRunCurrentTransaction,
   canAddElement,
+  harImportFeedback,
   handleTransactionSelect,
   handleTransactionRun,
   handleCurrentTransactionRun,
@@ -64,6 +67,7 @@ export function EditPageView({
   handleAddRequest,
   handleAddRequestGroup,
   handleAddData,
+  handleImportHar,
   handleApplyEdit,
   handleApplyDataEdit,
   handleApplyGroupEdit,
@@ -90,15 +94,34 @@ export function EditPageView({
             isSaving={editorState.save.isSaving}
             canRun={canRunCurrentTransaction}
             canAddElement={canAddElement}
+            canImportHar={canAddElement}
             onSave={handleManualSave}
             onRun={handleCurrentTransactionRun}
             onStop={handleStopSimulation}
             onAddRequest={handleAddRequest}
             onAddRequestGroup={handleAddRequestGroup}
             onAddData={handleAddData}
+            onImportHar={handleImportHar}
           />
         }
       >
+        {harImportFeedback ? (
+          <div
+            className={[
+              "border-b px-4 py-3 text-sm",
+              harImportFeedback.tone === "error"
+                ? "border-rose-200 bg-rose-50 text-rose-800"
+                : harImportFeedback.tone === "warning"
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-800",
+            ].join(" ")}
+          >
+            <p className="font-medium">{harImportFeedback.message}</p>
+            {harImportFeedback.warnings.length > 0 ? (
+              <p className="mt-1 text-xs opacity-80">{harImportFeedback.warnings.join(" ")}</p>
+            ) : null}
+          </div>
+        ) : null}
         <EditorCanvas
           script={currentScript}
           selectedTransactionId={selectedTransactionId}

@@ -14,12 +14,20 @@ export default function HomePage() {
           React Flow based edit canvas scaffold is available under the edit route.
         </p>
         <div className="mt-8">
-          <Link
-            href="/edit"
-            className="inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
-          >
-            Open edit page
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/edit"
+              className="inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white"
+            >
+              Open edit page
+            </Link>
+            <Link
+              href="/board"
+              className="inline-flex rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-900"
+            >
+              Open board example
+            </Link>
+          </div>
         </div>
       </div>
     </main>

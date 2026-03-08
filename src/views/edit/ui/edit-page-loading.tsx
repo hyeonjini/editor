@@ -18,12 +18,14 @@ export function EditPageLoading() {
             isSaving={false}
             canRun={false}
             canAddElement={false}
+            canImportHar={false}
             onSave={() => {}}
             onRun={() => {}}
             onStop={() => {}}
             onAddRequest={() => {}}
             onAddRequestGroup={() => {}}
             onAddData={() => {}}
+            onImportHar={() => {}}
           />
         }
       >

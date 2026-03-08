@@ -2,7 +2,6 @@ import type { Script } from "@/entities/script";
 import { nowIso } from "@/shared/lib/date";
 import type { EditorDocument } from "@/shared/model/editor-document";
 import { sampleEditorCanvasConnections, sampleEditorCanvasLayout, sampleScript } from "@/shared/mock";
-import type { EditorDocumentRepository } from "@/shared/ports/editor-document-repository.port";
 import type { SaveScriptResult, ScriptRepository } from "@/shared/ports/script-repository.port";
 
 const createSeedDocument = (script: Script): EditorDocument => ({
@@ -13,7 +12,7 @@ const createSeedDocument = (script: Script): EditorDocument => ({
   },
 });
 
-export class MockScriptRepository implements ScriptRepository, EditorDocumentRepository {
+export class MockScriptRepository implements ScriptRepository {
   private readonly memoryStore: Map<string, EditorDocument>;
   private readonly versions = new Map<string, number>();
 

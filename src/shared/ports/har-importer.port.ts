@@ -1,7 +1,8 @@
-import type { Script } from "@/entities/script";
+import type { RequestGroupNode } from "@/entities/script";
 
 export interface HarImportResult {
-  script: Script;
+  requestGroup: RequestGroupNode;
+  importedRequestCount: number;
   warnings: string[];
 }
 
