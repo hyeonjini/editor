@@ -22,7 +22,7 @@
 
 # local modeling workspace
 /modeling
-/study
+# /study
 
 # environment files
 .env
